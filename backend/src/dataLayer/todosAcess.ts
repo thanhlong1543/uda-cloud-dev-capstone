@@ -88,5 +88,28 @@ export class TodoAccess {
         }).promise()
         logger.info("update attachment successfully:", todoId)
     }
+
+    async getTodosForUserByName(userId: string, name: string): Promise<TodoItem[]> {
+        logger.info(`search todo for ${userId} by name ${name}`)
+
+        logger.info('Getting all todos for userId:', userId)
+
+        const result = await this.docClient.query({
+            TableName: this.todoTable,
+            IndexName: this.todoIndex,
+            FilterExpression: 'todoName = :todoName',
+            KeyConditionExpression: 'userId = :userId',
+            ExpressionAttributeValues: {
+                ':userId': userId,
+                ':todoName': name
+            }
+        }).promise()
+
+        logger.info('Data query:', result.Items)
+
+        const items = result.Items
+        return items as TodoItem[]
+    }
+
 }
 

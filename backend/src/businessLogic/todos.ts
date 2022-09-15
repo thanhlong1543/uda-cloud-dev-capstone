@@ -13,6 +13,10 @@ export async function getTodosForUser(userId: string): Promise<TodoItem[]> {
     return todoAccess.getTodosForUser(userId)
 }
 
+export async function getTodosForUserByName(userId: string, name: string): Promise<TodoItem[]> {
+    return todoAccess.getTodosForUserByName(userId, name)
+}
+
 export async function createTodo(
     createTodoRequest: CreateTodoRequest,
     userId: string
@@ -23,7 +27,7 @@ export async function createTodo(
     return await todoAccess.createTodo({
         todoId: itemId,
         userId: userId,
-        name: createTodoRequest.name,
+        todoName: createTodoRequest.name,
         dueDate: createTodoRequest.dueDate,
         createdAt: new Date().toISOString(),
         done: false
