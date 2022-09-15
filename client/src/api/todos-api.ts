@@ -30,6 +30,20 @@ export async function createTodo(
   return response.data.item
 }
 
+export async function searchTodo(
+  idToken: string,
+  name: string
+): Promise<Todo[]> {
+  const response = await Axios.get(`${apiEndpoint}/todos/search/${name}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${idToken}`
+    }
+  })
+  console.log(response.data.items)
+  return response.data.items
+}
+
 export async function patchTodo(
   idToken: string,
   todoId: string,

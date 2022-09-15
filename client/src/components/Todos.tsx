@@ -14,7 +14,7 @@ import {
   Loader
 } from 'semantic-ui-react'
 
-import { createTodo, deleteTodo, getTodos, patchTodo } from '../api/todos-api'
+import {createTodo, deleteTodo, getTodos, patchTodo, searchTodo} from '../api/todos-api'
 import Auth from '../auth/Auth'
 import { Todo } from '../types/Todo'
 
@@ -26,6 +26,7 @@ interface TodosProps {
 interface TodosState {
   todos: Todo[]
   newTodoName: string
+  searchString: string
   loadingTodos: boolean
 }
 
@@ -33,11 +34,16 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   state: TodosState = {
     todos: [],
     newTodoName: '',
+    searchString: '',
     loadingTodos: true
   }
 
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ newTodoName: event.target.value })
+  }
+
+  handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ searchString: event.target.value })
   }
 
   onEditButtonClick = (todoId: string) => {
@@ -60,6 +66,22 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     }
   }
 
+  onTodoSearch = async (event: React.ChangeEvent<HTMLButtonElement>) => {
+    try {
+      const todo = await searchTodo(this.props.auth.getIdToken(), this.state.searchString)
+      if(todo.length == 0) {
+        alert('No todo found')
+        return
+      }
+      this.setState({
+        todos: todo,
+        newTodoName: ''
+      })
+    } catch {
+      alert('Todo search failed')
+    }
+  }
+
   onTodoDelete = async (todoId: string) => {
     try {
       await deleteTodo(this.props.auth.getIdToken(), todoId)
@@ -75,7 +97,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     try {
       const todo = this.state.todos[pos]
       await patchTodo(this.props.auth.getIdToken(), todo.todoId, {
-        name: todo.name,
+        todoName: todo.todoName,
         dueDate: todo.dueDate,
         done: !todo.done
       })
@@ -90,6 +112,10 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   }
 
   async componentDidMount() {
+    await this.getAllTodos()
+  }
+
+  async getAllTodos() {
     try {
       const todos = await getTodos(this.props.auth.getIdToken())
       this.setState({
@@ -107,6 +133,11 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
         <Header as="h1">TODOs</Header>
 
         {this.renderCreateTodoInput()}
+
+        {this.renderSearchTodoInput()}
+
+        {this.renderBackToAllTodos()}
+
 
         {this.renderTodos()}
       </div>
@@ -137,6 +168,52 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
       </Grid.Row>
     )
   }
+
+  renderSearchTodoInput() {
+    return (
+      <Grid.Row>
+        <Grid.Column width={16}>
+          <Input
+            action={{
+              color: 'orange',
+              labelPosition: 'left',
+              icon: 'add',
+              content: 'Search todo',
+              onClick: this.onTodoSearch
+            }}
+            fluid
+            actionPosition="left"
+            placeholder="Input todo name..."
+            onChange={this.handleSearchChange}
+          />
+        </Grid.Column>
+        <Grid.Column width={16}>
+          <Divider />
+        </Grid.Column>
+      </Grid.Row>
+    )
+  }
+
+  renderBackToAllTodos() {
+    return (
+      <Grid.Row>
+        <Grid.Column width={16}>
+          <Button
+            icon
+            color="blue"
+            onClick={() => this.getAllTodos()}
+          >
+            <Icon name="angle left" />
+          </Button>
+          Back to all todos
+        </Grid.Column>
+        <Grid.Column width={16}>
+          <Divider />
+        </Grid.Column>
+      </Grid.Row>
+    )
+  }
+
 
   renderTodos() {
     if (this.state.loadingTodos) {
@@ -169,7 +246,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
                 />
               </Grid.Column>
               <Grid.Column width={10} verticalAlign="middle">
-                {todo.name}
+                {todo.todoName}
               </Grid.Column>
               <Grid.Column width={3} floated="right">
                 {todo.dueDate}
